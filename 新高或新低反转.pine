@@ -1,5 +1,5 @@
 //@version=5
-strategy("刃甲", overlay=true)
+strategy("新高或新低反转", overlay=true)
 
 // 策略输入参数
 timeWindowLong = input(3, "长期时间窗口")
