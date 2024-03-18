@@ -1,0 +1,50 @@
+//@version=5
+strategy("刃甲", overlay=true)
+
+// 策略输入参数
+timeWindowLong = input(3, "长期时间窗口")
+profitTakingTime = input(2, "获利时间")
+stopLossTime = input(2, "止损时间")
+minimumHoldTime = input(180, "最小持有时间")
+highestPeriodMultiplier = input(41, "最高价周期乘数")
+lowestPeriodMultiplier = input(21, "最低价周期乘数")
+newLowPeriod = input(10, "新低比较周期")
+profitTarget = input(-2, "利润目标百分比")
+actTimeMultiplier = input(2, "行动时间倍数")
+
+// 定义变量以存储上一次交易信息
+var float lastTradeTime = 0.0
+var float lastTradePrice = 0.0
+
+// 定义变量以存储新高信息
+var float newHighTime = 0.0
+var float newHighPrice = 0.0
+
+// 开仓条件的辅助函数
+shortCondition() =>
+    ta.highestbars(high, highestPeriodMultiplier * 4 * 2) == 0 and ta.lowestbars(low, lowestPeriodMultiplier * 4 * 2) * -1 >= highestPeriodMultiplier
+
+longCondition() =>
+    ta.lowestbars(low, lowestPeriodMultiplier * 4 * 2) == 0 and ta.highestbars(high, highestPeriodMultiplier * 4 * 2) * -1 >= lowestPeriodMultiplier
+
+// 核心交易逻辑
+if shortCondition()
+    newHighTime := time
+    newHighPrice := close
+
+isStopLoss = (100 - close / newHighPrice * 100) < stopLossTime
+isTimeToAct = (time - newHighTime) > actTimeMultiplier * 60 * 60 * 1000 and (time - newHighTime) < timeWindowLong * 60 * 60 * 1000
+isNewLow = low == ta.lowest(low, newLowPeriod)
+isProfitTargetReached = (close / lastTradePrice * 100 - 100) < profitTarget
+isTimeToTakeProfit = (time - lastTradeTime) > profitTakingTime * 60 * 60 * 1000
+
+if isStopLoss and isTimeToAct and isNewLow and strategy.position_size == 0
+    strategy.entry("chaodi2", strategy.long, comment="15号long")
+    lastTradeTime := time
+    lastTradePrice := close
+
+if isProfitTargetReached and strategy.position_size > 0
+    strategy.close("chaodi2", comment="15 tp")
+
+if isTimeToTakeProfit and strategy.position_size > 0
+    strategy.close("chaodi2", comment="15号 ot by little win")
